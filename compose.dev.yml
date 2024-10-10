@@ -10,7 +10,7 @@ services:
       - ./envs/discord.env
       - ./envs/db.env
       - ./envs/sentry.env
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
       interval: 5s
@@ -33,7 +33,7 @@ services:
       POSTGRES_DB: main
     volumes:
       - pg_data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: pg_isready -U user -d main
       interval: 2s
@@ -53,6 +53,7 @@ services:
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:
       - "127.0.0.1:8080:80"
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -70,6 +71,7 @@ services:
       - ./db:/app
     env_file:
       - ./envs/db.env
+    restart: no
     depends_on:
       db:
         condition: service_healthy
