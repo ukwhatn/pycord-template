@@ -35,7 +35,7 @@ jobs:
         done
         
         echo "Services did not become healthy within the allocated time."
-        make logs
+        make logs:once
         exit 1
 
     - name: Check service health
