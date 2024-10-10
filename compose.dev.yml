@@ -1,74 +1,38 @@
 services:
-  nginx:
-    image: nginx:latest
-    environment:
-      - TZ=Asia/Tokyo
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/conf.d/server.dev.conf:/etc/nginx/conf.d/server.conf
-      - ./nginx/log:/var/log/nginx
-      - front_dist:/www/dist
-    ports:
-      - "127.0.0.1:59990:80"
-    restart: always
-    networks:
-      - nginx
-    depends_on:
-      - front
-      - server
-
-  front:
+  discord:
     build:
       context: .
-      dockerfile: ./front/Dockerfile
-    command: [ "/bin/sh", "-c", "yarn dev" ]
-    ports:
-      - "127.0.0.1:59991:5173"
-    environment:
-      NODE_ENV: development
-      CHOKIDAR_USEPOLLING: true
-      LANG: C.UTF-8
-      TZ: Asia/Tokyo
+      dockerfile: discord/Dockerfile
     volumes:
-      - ./front:/app
-      - node_modules:/app/node_modules
-      - front_dist:/usr/build/dist
-    restart: always
-    networks:
-      - nginx
-
-  server:
-    build:
-      context: .
-      dockerfile: ./server/Dockerfile
-    command: [ "/bin/sh", "-c", "fastapi dev main.py --host 0.0.0.0 --port 80 --proxy-headers" ]
-    volumes:
-      - ./server:/app
+      - ./discord:/app
       - ./db:/app/db
-      - ./redis:/app/redis_crud
     env_file:
+      - ./envs/discord.env
       - ./envs/db.env
-      - ./envs/server.env
-    environment:
-      - ENV_MODE=development
+      - ./envs/sentry.env
     restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+      db-migrator:
+        condition: service_completed_successfully
     networks:
       - db
-      - redis
-      - nginx
 
   db:
-    image: postgres:16.1
+    image: postgres:17
     env_file:
       - ./envs/db.env
+    environment:
+      POSTGRES_DB: main
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d
     restart: always
     healthcheck:
       test: pg_isready -U postgres
@@ -80,49 +44,22 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
+    volumes:
+      - ./pgadmin/config/servers.json:/pgadmin4/servers.json
     environment:
       PGADMIN_DEFAULT_EMAIL: user@example.com
       PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     ports:
-      - "127.0.0.1:59113:80"
-    depends_on:
-      - db
-    networks:
-      - db
-
-  redis:
-    image: redis:7.2.4
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: redis-cli ping
-      interval: 2s
-      timeout: 5s
-      retries: 30
-    networks:
-      - redis
-
-  discord:
-    build:
-      context: .
-      dockerfile: discord/Dockerfile
-    volumes:
-      - ./discord:/app
-      - ./db:/app/db
-      - ./redis:/app/redis_crud
-    env_file:
-      - ./envs/discord.env
-      - ./envs/db.env
-      - ./envs/sentry.env
-    restart: always
+      - "127.0.0.1:8080:80"
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+      db-migrator:
+        condition: service_completed_successfully
     networks:
       - db
-      - redis
 
   db-migrator:
     build:
@@ -141,15 +78,7 @@ services:
 
 volumes:
   pg_data:
-  redis_data:
-  node_modules:
-  front_dist:
-
 
 networks:
-  nginx:
-    driver: bridge
   db:
-    driver: bridge
-  redis:
     driver: bridge

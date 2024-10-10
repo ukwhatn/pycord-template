@@ -1,2 +1,2 @@
-# ukwhatn's application template
+# Pycord Template
 
