@@ -1,0 +1,52 @@
+name: Check services health
+
+on:
+  pull_request:
+
+jobs:
+  docker-compose-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup environment
+      run: |
+        make envs:setup
+        sed -i 's/DISCORD_BOT_TOKEN=""/DISCORD_BOT_TOKEN="${{ secrets.CIBOT_TOKEN }}"/' envs/discord.env
+
+    - name: Build and start services
+      run: make up
+
+    - name: Wait for services to be ready
+      run: |
+        max_retries=30
+        retry_interval=10
+        
+        for i in $(seq 1 $max_retries)
+        do
+          if docker-compose ps | grep -q "healthy"; then
+            echo "All services are healthy!"
+            exit 0
+          else
+            echo "Waiting for services to be healthy... (Attempt $i/$max_retries)"
+            sleep $retry_interval
+          fi
+        done
+        
+        echo "Services did not become healthy within the allocated time."
+        docker-compose logs
+        exit 1
+
+    - name: Check service health
+      run: |
+        if docker-compose ps | grep -q "unhealthy"; then
+          echo "Some services are unhealthy:"
+          docker-compose ps
+          exit 1
+        else
+          echo "All services are healthy!"
+        fi
+
+    - name: Clean up
+      run: make down
