@@ -46,6 +46,7 @@ jobs:
           exit 1
         else
           echo "All services are healthy!"
+          make ps
         fi
 
     - name: Clean up
