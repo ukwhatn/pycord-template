@@ -25,27 +25,29 @@ jobs:
         
         for i in $(seq 1 $max_retries)
         do
-          if make ps | grep -q "healthy"; then
-            echo "All services are healthy!"
-            exit 0
+          if ! make ps | grep -q "health: starting"; then
+            echo "All services have finished starting!"
+            break
           else
-            echo "Waiting for services to be healthy... (Attempt $i/$max_retries)"
+            echo "Waiting for services to finish starting... (Attempt $i/$max_retries)"
             sleep $retry_interval
+          fi
+          
+          if [ $i -eq $max_retries ]; then
+            echo "Services did not finish starting within the allocated time."
+            make logs:once
+            exit 1
           fi
         done
         
-        echo "Services did not become healthy within the allocated time."
-        make logs:once
-        exit 1
-
-    - name: Check service health
-      run: |
         if make ps | grep -q "unhealthy"; then
           echo "Some services are unhealthy:"
           make ps
+          make logs:once
           exit 1
         else
           echo "All services are healthy!"
+          make ps
         fi
 
     - name: Clean up
