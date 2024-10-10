@@ -25,7 +25,7 @@ jobs:
         
         for i in $(seq 1 $max_retries)
         do
-          if docker compose ps | grep -q "healthy"; then
+          if make ps | grep -q "healthy"; then
             echo "All services are healthy!"
             exit 0
           else
@@ -35,14 +35,14 @@ jobs:
         done
         
         echo "Services did not become healthy within the allocated time."
-        docker compose logs
+        make logs
         exit 1
 
     - name: Check service health
       run: |
-        if docker compose ps | grep -q "unhealthy"; then
+        if make ps | grep -q "unhealthy"; then
           echo "Some services are unhealthy:"
-          docker compose ps
+          make ps
           exit 1
         else
           echo "All services are healthy!"
