@@ -1,10 +1,10 @@
-name: Check services health
+name: Check services healthy
 
 on:
   pull_request:
 
 jobs:
-  docker-compose-ci:
+  check_healthy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,12 +20,12 @@ jobs:
 
     - name: Wait for services to be ready
       run: |
-        max_retries=30
+        max_retries=10
         retry_interval=10
         
         for i in $(seq 1 $max_retries)
         do
-          if docker-compose ps | grep -q "healthy"; then
+          if docker compose ps | grep -q "healthy"; then
             echo "All services are healthy!"
             exit 0
           else
@@ -35,14 +35,14 @@ jobs:
         done
         
         echo "Services did not become healthy within the allocated time."
-        docker-compose logs
+        docker compose logs
         exit 1
 
     - name: Check service health
       run: |
-        if docker-compose ps | grep -q "unhealthy"; then
+        if docker compose ps | grep -q "unhealthy"; then
           echo "Some services are unhealthy:"
-          docker-compose ps
+          docker compose ps
           exit 1
         else
           echo "All services are healthy!"
