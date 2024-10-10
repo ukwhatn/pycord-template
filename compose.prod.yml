@@ -11,14 +11,22 @@ services:
       - ./envs/db.env
       - ./envs/sentry.env
     restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     depends_on:
       db:
         condition: service_healthy
+      db-migrator:
+        condition: service_completed_successfully
     networks:
       - db
 
   db:
-    image: postgres:17.0
+    image: postgres:17
     env_file:
       - ./envs/db.env
     environment:
