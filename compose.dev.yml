@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: discord/Dockerfile
+    command: [ "/bin/sh", "-c", "NEW_RELIC_CONFIG_FILE=newrelic.ini NEW_RELIC_ENVIRONMENT=development newrelic-admin run-program python bot.py" ]
     volumes:
       - ./discord:/app
       - ./db:/app/db
@@ -65,7 +66,7 @@ services:
   db-migrator:
     build:
       context: .
-      dockerfile: ./db/Dockerfile
+      dockerfile: db/migrator.Dockerfile
     tty: true
     volumes:
       - ./db:/app
