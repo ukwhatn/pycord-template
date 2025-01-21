@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: discord/Dockerfile
-    command: [ "/bin/sh", "-c", "NEW_RELIC_CONFIG_FILE=newrelic.ini NEW_RELIC_ENVIRONMENT=production newrelic-admin run-program python bot.py" ]
+    command: [ "/bin/sh", "-c", "NEW_RELIC_CONFIG_FILE=newrelic.ini NEW_RELIC_ENVIRONMENT=test newrelic-admin run-program python bot.py" ]
     volumes:
       - ./discord:/app
       - ./db:/app/db
@@ -11,7 +11,7 @@ services:
       - ./envs/discord.env
       - ./envs/db.env
       - ./envs/sentry.env
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
       interval: 5s
@@ -34,7 +34,7 @@ services:
       POSTGRES_DB: main
     volumes:
       - pg_data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: pg_isready -U user -d main
       interval: 2s
@@ -68,8 +68,7 @@ services:
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_DB=main
-    restart:
-      unless-stopped
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
