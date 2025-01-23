@@ -10,7 +10,7 @@ class HealthCheckServer:
         self.port = port
         self.latency_threshold = latency_threshold
         self.app = web.Application()
-        self.app.router.add_get('/', self.handle)
+        self.app.router.add_get("/", self.handle)
         self.logger = logging.getLogger("HealthCheckServer")
 
     async def handle(self, request):
@@ -22,7 +22,7 @@ class HealthCheckServer:
     async def start(self):
         runner = web.AppRunner(self.app)
         await runner.setup()
-        site = web.TCPSite(runner, 'localhost', self.port)
+        site = web.TCPSite(runner, "localhost", self.port)
         await site.start()
         self.logger.info(f"Health check server started on port {self.port}")
 
