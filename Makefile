@@ -92,10 +92,12 @@ db\:migrate:
 	docker compose -f $(COMPOSE_YML) run --rm db-migrator /bin/bash -c "alembic upgrade head"
 
 db\:backup:
-	docker compose -f $(COMPOSE_YML) exec db-dumper python dump.py oneshot
+	docker compose -f compose.prod.yml up -d --build db-dumper
+	docker compose -f compose.prod.yml exec db-dumper python dump.py oneshot
 
 db\:backup\:test:
-	docker compose -f $(COMPOSE_YML) exec db-dumper python dump.py test --confirm
+	docker compose -f compose.prod.yml up -d --build db-dumper
+	docker compose -f compose.prod.yml exec db-dumper python dump.py test --confirm
 
 db\:restore:
 	docker compose -f compose.prod.yml up -d --build db-dumper
