@@ -304,6 +304,7 @@ def restore_backup(backup_file: str):
                 capture_output=True,
             )
 
+
             # バックアップを復元
             subprocess.run(
                 [
