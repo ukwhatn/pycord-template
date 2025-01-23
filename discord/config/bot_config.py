@@ -14,10 +14,7 @@ async def NOTIFY_TO_OWNER(bot, message: str):
     dmCh = await owner.create_dm()
     await dmCh.send(
         content="Bot Status Notification",
-        embed=discord.Embed().add_field(
-            name="Status",
-            value=message
-        ).set_footer(
-            text=str(datetime.now())
-        )
+        embed=discord.Embed()
+        .add_field(name="Status", value=message)
+        .set_footer(text=str(datetime.now())),
     )
