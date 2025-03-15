@@ -1,6 +1,5 @@
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
-from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -40,7 +39,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         新規作成
         """
-        obj_in_data = jsonable_encoder(obj_in)
+        obj_in_data = obj_in.model_dump() if hasattr(obj_in, "model_dump") else obj_in.dict()
         db_obj = self.model(**obj_in_data)  # type: ignore
         db.add(db_obj)
         db.commit()
@@ -57,14 +56,20 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         更新
         """
-        obj_data = jsonable_encoder(db_obj)
+        obj_data = {
+            column.name: getattr(db_obj, column.name)
+            for column in db_obj.__table__.columns
+        }
+        
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.model_dump(exclude_unset=True)
+            update_data = obj_in.model_dump(exclude_unset=True) if hasattr(obj_in, "model_dump") else obj_in.dict(exclude_unset=True)
+            
         for field in obj_data:
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
+                
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
