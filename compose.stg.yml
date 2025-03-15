@@ -1,32 +1,36 @@
 services:
-  discord:
+  app:
+    container_name: pycord-template-app
     build:
       context: .
-      dockerfile: discord/Dockerfile
-    command: [ "/bin/sh", "-c", "NEW_RELIC_CONFIG_FILE=newrelic.ini NEW_RELIC_ENVIRONMENT=staging newrelic-admin run-program python bot.py" ]
+      dockerfile: docker/app.Dockerfile
     volumes:
-      - ./discord:/app
-      - ./db:/app/db
+      - ./app:/app
     env_file:
-      - ./envs/discord.env
       - ./envs/db.env
-      - ./envs/sentry.env
-    restart: always
+      - ./envs/discord.env
+    environment:
+      - ENV_MODE=production
+    restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
+      test: ["CMD-SHELL", "[ -f /bot_status.txt ] && grep -q 'ready' /bot_status.txt && [ $(date +%s) -lt $(($(cut -d':' -f2 /bot_status.txt) + 60)) ] || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       db-migrator:
         condition: service_completed_successfully
     networks:
       - db
+      - redis
 
   db:
+    container_name: pycord-template-db
     image: postgres:17
     env_file:
       - ./envs/db.env
@@ -34,7 +38,7 @@ services:
       POSTGRES_DB: main
     volumes:
       - pg_data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: pg_isready -U user -d main
       interval: 2s
@@ -43,15 +47,59 @@ services:
     networks:
       - db
 
+  redis:
+    container_name: pycord-template-redis
+    image: redis:7.4.1
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: redis-cli ping
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    networks:
+      - redis
+
   db-migrator:
+    container_name: pycord-template-db-migrator
     build:
       context: .
-      dockerfile: db/migrator.Dockerfile
-    tty: true
+      dockerfile: ./docker/db-tools.Dockerfile
+      args:
+        MODE: migrator
     volumes:
-      - ./db:/app
+      - ./app/db:/app/db
+      - ./app/core/config.py:/app/core/config.py
+      - ./migrations:/app/migrations
     env_file:
       - ./envs/db.env
+    environment:
+      - DB_TOOL_MODE=migrator
+    restart: no
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - db
+      
+  db-dumper:
+    container_name: pycord-template-db-dumper
+    build:
+      context: .
+      dockerfile: ./docker/db-tools.Dockerfile
+      args:
+        MODE: dumper
+    env_file:
+      - ./envs/db.env
+      - ./envs/sentry.env
+      - ./envs/aws-s3.env
+    environment:
+      - DB_TOOL_MODE=dumper
+      - DUMPER_MODE=stop
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=main
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -60,7 +108,10 @@ services:
 
 volumes:
   pg_data:
+  redis_data:
 
 networks:
   db:
+    driver: bridge
+  redis:
     driver: bridge
