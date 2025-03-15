@@ -1,10 +1,12 @@
 import logging
+import platform
 import sys
 import traceback
 from datetime import datetime
 from typing import Optional, Type, Any
 
 import discord
+import psutil
 from discord import slash_command
 from discord.ext import commands
 
@@ -23,6 +25,9 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener(name="on_ready")
     async def on_ready(self):
+        # 起動時刻を記録
+        self.bot.start_time = discord.utils.utcnow()
+
         if self.settings.is_production:
             await DiscordUtil.notify_to_owner(
                 self.bot,
@@ -57,7 +62,7 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(
-        self, ctx: discord.ApplicationContext, error: discord.DiscordException
+            self, ctx: discord.ApplicationContext, error: discord.DiscordException
     ):
         """
         コマンド実行時のエラーハンドラー
@@ -92,12 +97,12 @@ class Admin(commands.Cog):
         )
 
     async def _notify_error(
-        self,
-        error_type: Type[Exception],
-        error: Exception,
-        traceback_obj: Any,
-        title: str,
-        context_info: Optional[dict] = None,
+            self,
+            error_type: Type[Exception],
+            error: Exception,
+            traceback_obj: Any,
+            title: str,
+            context_info: Optional[dict] = None,
     ):
         """
         エラーをログに記録し、ボットオーナーに通知する共通処理
@@ -143,7 +148,7 @@ class Admin(commands.Cog):
             # トレースバックが長い場合は分割して追加
             if len(error_message) > 1024:
                 chunks = [
-                    error_message[i : i + 1024]
+                    error_message[i: i + 1024]
                     for i in range(0, len(error_message), 1024)
                 ]
                 for i, chunk in enumerate(chunks):
@@ -162,15 +167,62 @@ class Admin(commands.Cog):
         except Exception as e:
             self.logger.error(f"Failed to send error notification: {e}")
 
-    @slash_command(name="test_on_error", description="Test on_error event handler")
+    @slash_command(name="status", description="ボットのステータスを確認します")
     @commands.is_owner()
-    async def test_on_error(self, ctx: discord.commands.context.ApplicationContext):
-        if self.settings.is_development:
-            raise Exception("Test on_error event handler")
-        else:
-            await ctx.respond(
-                "This command is only available in development mode", ephemeral=True
-            )
+    async def status(self, ctx: discord.ApplicationContext):
+        """ボットのステータス情報を表示します"""
+        await ctx.defer(ephemeral=True)
+
+        # 基本情報を収集
+        uptime = (
+            discord.utils.utcnow() - self.bot.start_time
+            if hasattr(self.bot, "start_time")
+            else None
+        )
+        uptime_str = str(uptime).split(".")[0] if uptime else "Unknown"
+
+        # サーバー数、ユーザー数などの統計
+        guilds_count = len(self.bot.guilds)
+        users_count = sum(g.member_count for g in self.bot.guilds)
+
+        # システム情報
+        process = psutil.Process()
+        memory_usage = process.memory_info().rss / (1024 * 1024)  # MB単位
+
+        # Embedを作成
+        embed = discord.Embed(
+            title="Bot Status",
+            color=discord.Color.blue(),
+            timestamp=discord.utils.utcnow(),
+        )
+
+        # 基本情報
+        embed.add_field(
+            name="Bot",
+            value=f"{self.bot.user.name} (`{self.bot.user.id}`)",
+            inline=False,
+        )
+        embed.add_field(name="Environment", value=self.settings.ENV_MODE, inline=True)
+        embed.add_field(name="Uptime", value=uptime_str, inline=True)
+
+        # 統計情報
+        embed.add_field(name="Guilds", value=str(guilds_count), inline=True)
+        embed.add_field(name="Users", value=str(users_count), inline=True)
+        embed.add_field(
+            name="Commands", value=str(len(self.bot.application_commands)), inline=True
+        )
+
+        # システム情報
+        embed.add_field(name="Python", value=platform.python_version(), inline=True)
+        embed.add_field(name="Discord.py", value=discord.__version__, inline=True)
+        embed.add_field(name="Memory", value=f"{memory_usage:.2f} MB", inline=True)
+
+        # フッター
+        embed.set_footer(
+            text=f"Requested by {ctx.author}", icon_url=ctx.author.display_avatar.url
+        )
+
+        await ctx.respond(embed=embed)
 
 
 def setup(bot):
