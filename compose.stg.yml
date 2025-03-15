@@ -13,7 +13,7 @@ services:
       - ENV_MODE=production
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "[ -f /tmp/bot_status.txt ] && grep -q 'ready' /tmp/bot_status.txt && [ $(date +%s) -lt $(($(cut -d':' -f2 /tmp/bot_status.txt) + 60)) ] || exit 1"]
+      test: ["CMD-SHELL", "[ -f /bot_status.txt ] && grep -q 'ready' /bot_status.txt && [ $(date +%s) -lt $(($(cut -d':' -f2 /bot_status.txt) + 60)) ] || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

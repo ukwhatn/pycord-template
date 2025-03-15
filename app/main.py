@@ -19,7 +19,7 @@ if config.is_production and config.SENTRY_DSN is not None and config.SENTRY_DSN 
     logger.info("Sentry is enabled")
     sentry_sdk.init(dsn=config.SENTRY_DSN, traces_sample_rate=1.0)
 
-if config.BOT_TOKEN is None or config.BOT_TOKEN == "":
+if config.BOT_TOKEN is None or len(config.BOT_TOKEN) == 0:
     raise ValueError("BOT_TOKEN is not set")
 
 # bot init

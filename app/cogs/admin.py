@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional, Type, Any
 
 import discord
+from discord import slash_command
 from discord.ext import commands
 
 from core import get_settings
@@ -12,7 +13,7 @@ from utils import DiscordUtil
 
 
 class Admin(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: discord.Bot):
         self.bot = bot
         self.settings = get_settings()
         self.logger = logging.getLogger("discord")
@@ -51,14 +52,12 @@ class Admin(commands.Cog):
             error=error,
             traceback_obj=error_traceback,
             title=f"Error in {event}",
-            context_info=None
+            context_info=None,
         )
 
     @commands.Cog.listener()
-    async def on_command_error(
-            self,
-            ctx: commands.Context,
-            error
+    async def on_application_command_error(
+        self, ctx: discord.ApplicationContext, error: discord.DiscordException
     ):
         """
         コマンド実行時のエラーハンドラー
@@ -75,13 +74,13 @@ class Admin(commands.Cog):
         # コンテキスト情報を収集
         context_info = {
             "Command": f"{ctx.command}",
-            "Channel": f"{ctx.channel.name} ({ctx.channel.id})",
-            "User": f"{ctx.author} ({ctx.author.id})"
+            "User": f"{ctx.author} ({ctx.author.id})",
         }
 
         # ギルド情報を追加（DMの場合は追加しない）
         if ctx.guild:
             context_info["Guild"] = f"{ctx.guild.name} ({ctx.guild.id})"
+            context_info["Channel"] = f"{ctx.channel.name} ({ctx.channel.id})"
 
         # エラー通知
         await self._notify_error(
@@ -89,7 +88,7 @@ class Admin(commands.Cog):
             error=original_error,
             traceback_obj=original_error.__traceback__,
             title=f"Command Error: {ctx.command}",
-            context_info=context_info
+            context_info=context_info,
         )
 
     async def _notify_error(
@@ -98,7 +97,7 @@ class Admin(commands.Cog):
         error: Exception,
         traceback_obj: Any,
         title: str,
-        context_info: Optional[dict] = None
+        context_info: Optional[dict] = None,
     ):
         """
         エラーをログに記録し、ボットオーナーに通知する共通処理
@@ -121,7 +120,9 @@ class Admin(commands.Cog):
             else:
                 traceback_text = "".join(traceback.format_tb(traceback_obj, limit=15))
 
-            error_message = f"```py\n{traceback_text}\n{error_type.__name__}: {error}\n```"
+            error_message = (
+                f"```py\n{traceback_text}\n{error_type.__name__}: {error}\n```"
+            )
 
             # エラー通知用Embedを作成
             embed = discord.Embed(
@@ -142,7 +143,7 @@ class Admin(commands.Cog):
             # トレースバックが長い場合は分割して追加
             if len(error_message) > 1024:
                 chunks = [
-                    error_message[i: i + 1024]
+                    error_message[i : i + 1024]
                     for i in range(0, len(error_message), 1024)
                 ]
                 for i, chunk in enumerate(chunks):
@@ -160,6 +161,16 @@ class Admin(commands.Cog):
             )
         except Exception as e:
             self.logger.error(f"Failed to send error notification: {e}")
+
+    @slash_command(name="test_on_error", description="Test on_error event handler")
+    @commands.is_owner()
+    async def test_on_error(self, ctx: discord.commands.context.ApplicationContext):
+        if self.settings.is_development:
+            raise Exception("Test on_error event handler")
+        else:
+            await ctx.respond(
+                "This command is only available in development mode", ephemeral=True
+            )
 
 
 def setup(bot):

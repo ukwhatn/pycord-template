@@ -4,10 +4,13 @@ import discord
 from discord.commands import Option, slash_command
 from discord.ext import commands
 
+from core import get_settings
+
 
 class CogManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.settings = get_settings()
 
     async def autocomplete_loaded_cog_names(
         self, ctx: discord.commands.context.ApplicationContext
