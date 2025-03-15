@@ -1,4 +1,6 @@
 import logging
+import os
+import pathlib
 
 import discord
 import sentry_sdk
@@ -28,9 +30,12 @@ bot = commands.Bot(
     intents=discord.Intents.all(),
 )
 
-cogs = ["admin", "cog_manager"]
-
-for cog_name in cogs:
-    bot.load_extension(f"cogs.{cog_name}")
+# Automatically load all cogs except the template
+cogs_dir = pathlib.Path(__file__).parent / "cogs"
+for file in os.listdir(cogs_dir):
+    if file.endswith(".py") and not file.startswith("__") and file != "template.py":
+        cog_name = file.removesuffix(".py")
+        logger.info(f"Loading cog: {cog_name}")
+        bot.load_extension(f"cogs.{cog_name}")
 
 bot.run(config.BOT_TOKEN)
