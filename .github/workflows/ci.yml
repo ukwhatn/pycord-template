@@ -46,15 +46,15 @@ jobs:
           set -e
           make envs:setup
 
-          # BOT_TOKENの置換を確認
+          # BOT_TOKEN
           grep -q 'BOT_TOKEN=""' envs/discord.env || { echo "BOT_TOKEN置換パターンが見つかりません"; exit 1; }
           sed -i 's|BOT_TOKEN=""|BOT_TOKEN="${{ secrets.CIBOT_TOKEN }}"|' envs/discord.env
 
-          # S3_ACCESS_KEYの置換を確認
+          # S3_ACCESS_KEY
           grep -q 'S3_ACCESS_KEY=your_access_key' envs/aws-s3.env || { echo "S3_ACCESS_KEY置換パターンが見つかりません"; exit 1; }
           sed -i 's|S3_ACCESS_KEY=your_access_key|S3_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}"|' envs/aws-s3.env
 
-          # S3_SECRET_KEYの置換を確認
+          # S3_SECRET_KEY
           grep -q 'S3_SECRET_KEY=your_secret_key' envs/aws-s3.env || { echo "S3_SECRET_KEY置換パターンが見つかりません"; exit 1; }
           sed -i 's|S3_SECRET_KEY=your_secret_key|S3_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}"|' envs/aws-s3.env
 
