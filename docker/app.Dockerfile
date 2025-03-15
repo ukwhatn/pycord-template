@@ -1,4 +1,4 @@
-FROM python:3.12.7-slim
+FROM python:3.12.9-slim
 
 WORKDIR /app
 
@@ -23,3 +23,5 @@ RUN chown -R nonroot:nonroot /app
 
 # 非rootユーザーに切り替え
 USER nonroot
+
+CMD ["python", "main.py"]
