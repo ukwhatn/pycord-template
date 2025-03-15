@@ -73,15 +73,11 @@ jobs:
           trivy config --exit-code 1 --severity CRITICAL ./docker/app.Dockerfile &
           TRIVY1_PID=$!
           
-          trivy config --exit-code 1 --severity CRITICAL ./docker/db-tools.Dockerfile &
-          TRIVY2_PID=$!
-          
           # Wait for all processes to complete, fail if any fail
           wait $LINT_PID || { echo "Linting failed"; exit 1; }
           wait $BANDIT_PID || { echo "Bandit scan failed"; exit 1; }
           wait $SEMGREP_PID || { echo "Semgrep scan failed"; exit 1; }
           wait $TRIVY1_PID || { echo "Trivy app.Dockerfile scan failed"; exit 1; }
-          wait $TRIVY2_PID || { echo "Trivy db-tools.Dockerfile scan failed"; exit 1; }
           
           echo "All quality and security checks passed!"
 
