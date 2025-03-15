@@ -45,20 +45,33 @@ jobs:
         run: |
           make envs:setup
 
-          # BOT_TOKENの置換とチェック
-          cp envs/discord.env envs/discord.env.bak
-          sed -i 's|BOT_TOKEN=""|BOT_TOKEN="${{ secrets.CIBOT_TOKEN }}"|' envs/discord.env
-          diff -q envs/discord.env.bak envs/discord.env || { echo "BOT_TOKENの置換が行われませんでした"; exit 1; }
+          # 置換対象の設定をループ処理用の配列として定義
+          declare -A replacements=(
+            ["envs/discord.env:BOT_TOKEN=\"\""]="BOT_TOKEN=\"\${{ secrets.CIBOT_TOKEN }}\""
+            ["envs/aws-s3.env:S3_ACCESS_KEY=your_access_key"]="S3_ACCESS_KEY=\"\${{ secrets.S3_ACCESS_KEY }}\""
+            ["envs/aws-s3.env:S3_SECRET_KEY=your_secret_key"]="S3_SECRET_KEY=\"\${{ secrets.S3_SECRET_KEY }}\""
+          )
 
-          # S3_ACCESS_KEYの置換とチェック
-          cp envs/aws-s3.env envs/aws-s3.env.bak
-          sed -i 's|S3_ACCESS_KEY=your_access_key|S3_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}"|' envs/aws-s3.env
-          diff -q envs/aws-s3.env.bak envs/aws-s3.env || { echo "S3_ACCESS_KEYの置換が行われませんでした"; exit 1; }
+          # 各置換をループで実行
+          for pattern in "${!replacements[@]}"; do
+            IFS=':' read -r file search_pattern <<< "$pattern"
+            replace_value="${replacements[$pattern]}"
+            description="${search_pattern%%=*}"  # 「=」より前の部分を抽出
 
-          # S3_SECRET_KEYの置換とチェック
-          cp envs/aws-s3.env envs/aws-s3.env.bak2
-          sed -i 's|S3_SECRET_KEY=your_secret_key|S3_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}"|' envs/aws-s3.env
-          diff -q envs/aws-s3.env.bak2 envs/aws-s3.env || { echo "S3_SECRET_KEYの置換が行われませんでした"; exit 1; }
+            # バックアップを作成
+            cp "$file" "$file.bak"
+
+            # 置換を実行
+            sed -i "s|$search_pattern|$replace_value|" "$file"
+
+            # 差分をチェック
+            if ! diff -q "$file.bak" "$file" > /dev/null; then
+              echo "${description}の置換が成功しました"
+            else
+              echo "${description}の置換が行われませんでした"
+              exit 1
+            fi
+          done
 
       # Quality and Security Checks (Run in parallel for speed)
       - name: Run Quality and Security Checks
