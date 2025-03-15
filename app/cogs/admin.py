@@ -21,7 +21,7 @@ class Admin(commands.Cog):
             )
         else:
             self.logger.info(
-                f"{self.bot.user.name} is ready on {self.settings.ENV_MODE} mode"
+                f"{self.bot.user.name} is started on {self.settings.ENV_MODE} mode"
             )
 
 
