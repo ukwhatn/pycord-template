@@ -10,7 +10,7 @@ services:
       - ./envs/db.env
       - ./envs/discord.env
     environment:
-      - ENV_MODE=development
+      - ENV_MODE=production
     restart: unless-stopped
     depends_on:
       db:
