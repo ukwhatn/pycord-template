@@ -86,10 +86,6 @@ jobs:
           echo "All quality and security checks passed!"
 
       # Docker Build and Health Check
-      - name: Build Docker images
-        run: |
-          make build ENV=test
-
       - name: Start services
         run: make up ENV=test
 
