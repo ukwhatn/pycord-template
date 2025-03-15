@@ -44,7 +44,7 @@ jobs:
       - name: Setup environment
         run: |
           make envs:setup
-          sed -i 's|BOT_TOKEN=""|S3_ACCESS_KEY="${{ secrets.CIBOT_TOKEN }}"|' envs/discord.env
+          sed -i 's|BOT_TOKEN=""|BOT_TOKEN="${{ secrets.CIBOT_TOKEN }}"|' envs/discord.env
           sed -i 's|S3_ACCESS_KEY=your_access_key|S3_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}"|' envs/aws-s3.env
           sed -i 's|S3_SECRET_KEY=your_secret_key|S3_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}"|' envs/aws-s3.env
 
