@@ -108,6 +108,7 @@ jobs:
           
           if [ $elapsed -ge $timeout ]; then
             echo "❌ タイムアウト: サービスが起動しませんでした"
+            make ps ENV=test
             make logs:once ENV=test
             exit 1
           fi
