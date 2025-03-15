@@ -44,6 +44,8 @@ jobs:
       - name: Setup environment
         run: |
           make envs:setup
+          sed -i 's|S3_ACCESS_KEY=your_access_key|S3_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}"|' envs/aws-s3.env
+          sed -i 's|S3_SECRET_KEY=your_secret_key|S3_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}"|' envs/aws-s3.env
 
       # Quality and Security Checks (Run in parallel for speed)
       - name: Run Quality and Security Checks
@@ -124,11 +126,6 @@ jobs:
 
       - name: Check Dumper service
         run: |
-          # S3接続情報を設定（必要な場合）
-          if [ "${{ secrets.S3_ACCESS_KEY }}" != "" ]; then
-            sed -i 's|S3_ACCESS_KEY=your_access_key|S3_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}"|' envs/aws-s3.env
-            sed -i 's|S3_SECRET_KEY=your_secret_key|S3_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}"|' envs/aws-s3.env
-          fi
           make db:dump:test ENV=test
 
       - name: Clean up
