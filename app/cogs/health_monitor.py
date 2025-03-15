@@ -12,7 +12,7 @@ class HealthMonitor(commands.Cog):
     ボットの健全性をモニタリングし、ステータスファイルに記録する
     """
 
-    def __init__(self, bot: commands.Bot, status_file='/tmp/bot_status.txt'):
+    def __init__(self, bot: commands.Bot, status_file="/tmp/bot_status.txt"):
         self.bot = bot
         self.status_file = status_file
         self.running = True
@@ -34,10 +34,10 @@ class HealthMonitor(commands.Cog):
         """
         try:
             is_healthy = self.bot.is_ready()
-            status = 'ready' if is_healthy else 'not_ready'
+            status = "ready" if is_healthy else "not_ready"
             timestamp = int(time.time())
 
-            with open(self.status_file, 'w') as f:
+            with open(self.status_file, "w") as f:
                 f.write(f"{status}:{timestamp}")
         except Exception as e:
             logger.error(f"Failed to update health status: {str(e)}")
