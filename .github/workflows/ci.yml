@@ -38,7 +38,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry config virtualenvs.create false
-          poetry install --with dev,server,db,dumper
+          poetry install --with dev,discord,db,dumper
 
       - name: Setup environment
         run: |
@@ -108,7 +108,7 @@ jobs:
       - name: Scan Dockerfiles
         run: |
           # 重要な脆弱性のみチェック
-          trivy config --exit-code 1 --severity CRITICAL ./docker/server.Dockerfile
+          trivy config --exit-code 1 --severity CRITICAL ./docker/app.Dockerfile
           trivy config --exit-code 1 --severity CRITICAL ./docker/db-tools.Dockerfile
 
   check-healthy:
