@@ -1,27 +1,17 @@
 services:
-  server:
-    container_name: pycord-template-server
+  app:
+    container_name: pycord-template-app
     build:
       context: .
-      dockerfile: docker/server.Dockerfile
-    command: [ "/bin/sh", "-c", "fastapi run main.py --host 0.0.0.0 --port 80 --proxy-headers" ]
-    ports:
-      - "127.0.0.1:59999:80"
+      dockerfile: docker/app.Dockerfile
     volumes:
       - ./app:/app
     env_file:
       - ./envs/db.env
-      - ./envs/server.env
-      - ./envs/sentry.env
+      - ./envs/discord.env
     environment:
-      - ENV_MODE=production
+      - ENV_MODE=development
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:80/system/healthcheck/" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
     depends_on:
       db:
         condition: service_healthy
