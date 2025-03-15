@@ -1,19 +1,19 @@
 [tool.poetry]
 name = "pycord-template"
 version = "1.0.0"
-description = "A template for creating a new application"
+description = "A template for creating a new discordbot"
 authors = ["Yuki Watanabe <ukwhatn@gmail.com>"]
 package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
 
-[tool.poetry.group.server]
+[tool.poetry.group.discord]
 optional = true
-[tool.poetry.group.server.dependencies]
+[tool.poetry.group.discord.dependencies]
+py-cord = {extras = ["speed"], version = "^2.6.1"}
 redis = "^5.0.8"
-fastapi = {extras = ["standard"], version = "^0.115.0"}
-sentry-sdk = {extras = ["fastapi"], version = "^2.19.2"}
+sentry-sdk = "^2.13.0"
 
 [tool.poetry.group.dev]
 optional = true
