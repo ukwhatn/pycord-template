@@ -154,6 +154,7 @@ def list_old_backups(s3_client) -> List[str]:
         if "SENTRY_DSN" in os.environ:
             sentry_sdk.capture_exception(e)
         logger.error(f"Error listing old backups: {str(e)}")
+        raise
 
     return old_backups
 
@@ -173,6 +174,7 @@ def delete_old_backups(s3_client, old_backups: List[str]):
         if "SENTRY_DSN" in os.environ:
             sentry_sdk.capture_exception(e)
         logger.error(f"Error deleting old backups: {str(e)}")
+        raise
 
 
 def select_backup_file() -> Optional[str]:
@@ -275,6 +277,7 @@ def create_backup():
         if "SENTRY_DSN" in os.environ:
             sentry_sdk.capture_exception(e)
         logger.error(f"Backup failed: {str(e)}")
+        raise
 
 
 def restore_backup(backup_file: str):
@@ -409,6 +412,7 @@ def list_backups():
         if "SENTRY_DSN" in os.environ:
             sentry_sdk.capture_exception(e)
         print(f"Error listing backups: {str(e)}")
+        raise
 
 
 def run_scheduled_backups():
@@ -460,6 +464,8 @@ def main():
     arg1 = sys.argv[1] if len(sys.argv) > 1 else None
     arg2 = sys.argv[2] if len(sys.argv) > 2 else None
 
+    error_count = 0
+
     if arg1 == "oneshot":
         logger.info("Running oneshot backup")
         create_backup()
@@ -496,7 +502,18 @@ def main():
         elif mode == "stop":
             pass
         else:
-            run_scheduled_backups()
+            try:
+                run_scheduled_backups()
+                error_count = 0
+            except Exception as e:
+                if "SENTRY_DSN" in os.environ:
+                    sentry_sdk.capture_exception(e)
+                logger.error(f"Error running scheduled backups: {str(e)}")
+                error_count += 1
+
+                if error_count > 3:
+                    logger.error("Too many errors, exiting")
+                    sys.exit(1)
 
 
 if __name__ == "__main__":
