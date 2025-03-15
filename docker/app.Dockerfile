@@ -8,12 +8,18 @@ RUN apt update && \
     tzdata libpq-dev gcc make && \
     pip install --upgrade pip poetry
 
-# install requirements
-COPY ./app/poetry.lock ./app/pyproject.toml ./app/Makefile /app/
+# Poetryの設定
 RUN poetry config virtualenvs.create false
-RUN make poetry:install
 
-# add poetry files for symlinks
-COPY ./pyproject.toml ./poetry.lock /
+# 依存関係ファイルをコピー
+COPY pyproject.toml poetry.lock ./
 
-CMD ["python", "main.py"]
+# 依存関係インストール
+RUN poetry install --with discord,db
+
+# 非rootユーザーを作成
+RUN adduser --disabled-password --gecos "" nonroot
+RUN chown -R nonroot:nonroot /app
+
+# 非rootユーザーに切り替え
+USER nonroot
