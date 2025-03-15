@@ -43,20 +43,22 @@ jobs:
 
       - name: Setup environment
         run: |
-          set -e
           make envs:setup
 
-          # BOT_TOKEN
-          grep -q 'BOT_TOKEN=""' envs/discord.env || { echo "BOT_TOKEN置換パターンが見つかりません"; exit 1; }
+          # BOT_TOKENの置換とチェック
+          cp envs/discord.env envs/discord.env.bak
           sed -i 's|BOT_TOKEN=""|BOT_TOKEN="${{ secrets.CIBOT_TOKEN }}"|' envs/discord.env
+          diff -q envs/discord.env.bak envs/discord.env || { echo "BOT_TOKENの置換が行われませんでした"; exit 1; }
 
-          # S3_ACCESS_KEY
-          grep -q 'S3_ACCESS_KEY=your_access_key' envs/aws-s3.env || { echo "S3_ACCESS_KEY置換パターンが見つかりません"; exit 1; }
+          # S3_ACCESS_KEYの置換とチェック
+          cp envs/aws-s3.env envs/aws-s3.env.bak
           sed -i 's|S3_ACCESS_KEY=your_access_key|S3_ACCESS_KEY="${{ secrets.S3_ACCESS_KEY }}"|' envs/aws-s3.env
+          diff -q envs/aws-s3.env.bak envs/aws-s3.env || { echo "S3_ACCESS_KEYの置換が行われませんでした"; exit 1; }
 
-          # S3_SECRET_KEY
-          grep -q 'S3_SECRET_KEY=your_secret_key' envs/aws-s3.env || { echo "S3_SECRET_KEY置換パターンが見つかりません"; exit 1; }
+          # S3_SECRET_KEYの置換とチェック
+          cp envs/aws-s3.env envs/aws-s3.env.bak2
           sed -i 's|S3_SECRET_KEY=your_secret_key|S3_SECRET_KEY="${{ secrets.S3_SECRET_KEY }}"|' envs/aws-s3.env
+          diff -q envs/aws-s3.env.bak2 envs/aws-s3.env || { echo "S3_SECRET_KEYの置換が行われませんでした"; exit 1; }
 
       # Quality and Security Checks (Run in parallel for speed)
       - name: Run Quality and Security Checks
