@@ -14,7 +14,7 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "[ -f /tmp/bot_status.txt ] && grep -q 'ready' /tmp/bot_status.txt && [ $(date +%s) -lt $(($(cut -d':' -f2 /tmp/bot_status.txt) + 30)) ] || exit 1"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
       retries: 3
     depends_on:
