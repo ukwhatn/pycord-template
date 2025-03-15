@@ -102,6 +102,7 @@ jobs:
             fi
           
             echo "🕒 サービス起動中... 経過時間: ${elapsed}秒/${timeout}秒"
+            make ps ENV=test
             sleep $interval
             elapsed=$((elapsed + interval))
           done
