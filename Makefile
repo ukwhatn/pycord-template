@@ -138,7 +138,7 @@ db\:backup\:test: # 後方互換性のためにエイリアスを提供
 	make db:dump:test
 
 envs\:setup:
-	cp envs/server.env.example envs/server.env
+	cp envs/discord.env.example envs/discord.env
 	cp envs/db.env.example envs/db.env
 	cp envs/sentry.env.example envs/sentry.env
 	cp envs/aws-s3.env.example envs/aws-s3.env

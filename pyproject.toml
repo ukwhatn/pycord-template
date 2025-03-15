@@ -6,12 +6,12 @@ authors = ["Yuki Watanabe <ukwhatn@gmail.com>"]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "3.12.*"
 
 [tool.poetry.group.discord]
 optional = true
 [tool.poetry.group.discord.dependencies]
-py-cord = {extras = ["speed"], version = "^2.6.1"}
+py-cord = { extras = ["speed"], version = "^2.6.1" }
 redis = "^5.0.8"
 sentry-sdk = "^2.13.0"
 

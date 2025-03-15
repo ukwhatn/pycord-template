@@ -1,4 +1,5 @@
-from .session import SessionCrud
+from .discord import DiscordUtil
 from .schemas import SessionSchema
+from .session import SessionCrud
 
-__all__ = ["SessionCrud", "SessionSchema"]
+__all__ = ["DiscordUtil", "SessionCrud", "SessionSchema"]
