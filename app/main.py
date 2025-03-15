@@ -28,12 +28,9 @@ bot = commands.Bot(
     intents=discord.Intents.all(),
 )
 
-cogs = [
-    'admin',
-    'cog_manager'
-]
+cogs = ["admin", "cog_manager"]
 
 for cog_name in cogs:
-    bot.load_extension(f'cogs.{cog_name}')
+    bot.load_extension(f"cogs.{cog_name}")
 
 bot.run(config.BOT_TOKEN)

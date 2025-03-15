@@ -10,12 +10,12 @@ class CogManager(commands.Cog):
         self.bot = bot
 
     async def autocomplete_loaded_cog_names(
-            self, ctx: discord.commands.context.ApplicationContext
+        self, ctx: discord.commands.context.ApplicationContext
     ):
         return [value for value in self.bot.cogs.keys() if value.startswith(ctx.value)]
 
     async def autocomplete_all_cogfile_names(
-            self, ctx: discord.commands.context.ApplicationContext
+        self, ctx: discord.commands.context.ApplicationContext
     ):
         values = [
             cog.removeprefix("/app/cogs/").removesuffix(".py")
@@ -26,11 +26,11 @@ class CogManager(commands.Cog):
     @slash_command(name="reload", description="指定したCogをリロードします")
     @commands.is_owner()
     async def reload(
-            self,
-            ctx: discord.commands.context.ApplicationContext,
-            modulename: Option(
-                str, "provide cog name", autocomplete=autocomplete_loaded_cog_names
-            ),
+        self,
+        ctx: discord.commands.context.ApplicationContext,
+        modulename: Option(
+            str, "provide cog name", autocomplete=autocomplete_loaded_cog_names
+        ),
     ):
         await ctx.response.defer(ephemeral=True, invisible=False)
         try:
@@ -42,11 +42,11 @@ class CogManager(commands.Cog):
     @slash_command(name="load", description="指定したCogをロードします")
     @commands.is_owner()
     async def load(
-            self,
-            ctx: discord.commands.context.ApplicationContext,
-            modulename: Option(
-                str, "provide cog name", autocomplete=autocomplete_all_cogfile_names
-            ),
+        self,
+        ctx: discord.commands.context.ApplicationContext,
+        modulename: Option(
+            str, "provide cog name", autocomplete=autocomplete_all_cogfile_names
+        ),
     ):
         msg = await ctx.respond(f":arrow_up: Loading {modulename}")
         try:
@@ -58,11 +58,11 @@ class CogManager(commands.Cog):
     @slash_command(name="unload", description="指定したCogをアンロードします")
     @commands.is_owner()
     async def unload(
-            self,
-            ctx: discord.commands.context.ApplicationContext,
-            modulename: Option(
-                str, "provide cog name", autocomplete=autocomplete_loaded_cog_names
-            ),
+        self,
+        ctx: discord.commands.context.ApplicationContext,
+        modulename: Option(
+            str, "provide cog name", autocomplete=autocomplete_loaded_cog_names
+        ),
     ):
         await ctx.response.defer(ephemeral=True, invisible=False)
         try:

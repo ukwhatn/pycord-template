@@ -14,7 +14,7 @@ class Admin(commands.Cog):
         if self.settings.is_production:
             await DiscordUtil.notify_to_owner(
                 self.bot,
-                f"{self.bot.user.name} is ready on {self.settings.ENV_MODE} mode"
+                f"{self.bot.user.name} is ready on {self.settings.ENV_MODE} mode",
             )
 
 

@@ -21,5 +21,5 @@ class DiscordUtil:
             content="Notification",
             embed=discord.Embed()
             .add_field(name="Status", value=message)
-            .set_footer(text=str(datetime.now()))
+            .set_footer(text=str(datetime.now())),
         )

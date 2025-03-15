@@ -1,4 +1,3 @@
-import secrets
 from typing import Optional
 
 from core import get_settings
@@ -31,15 +30,14 @@ class SessionCrud:
         """
         return self.crud.get(key)
 
-    def set(self, key: str, value: SessionSchema) -> bool:
+    def set(self, key: str, value: SessionSchema, expire: int | None = None) -> bool:
         """
         セッションデータ設定
         """
-        return self.crud.set(key, value, expire=self.expire)
+        return self.crud.set(key, value, expire=expire)
 
     def delete(self, key: str) -> int:
         """
         セッションデータ削除
         """
         return self.crud.delete(key)
-
