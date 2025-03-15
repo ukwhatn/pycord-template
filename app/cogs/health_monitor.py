@@ -12,7 +12,7 @@ class HealthMonitor(commands.Cog):
     ボットの健全性をモニタリングし、ステータスファイルに記録する
     """
 
-    def __init__(self, bot: commands.Bot, status_file="/bot_status.txt"):
+    def __init__(self, bot: commands.Bot, status_file="/tmp/bot_status.txt"):
         self.bot = bot
         self.status_file = status_file
         self.running = True
