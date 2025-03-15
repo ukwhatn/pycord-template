@@ -55,7 +55,11 @@ class Admin(commands.Cog):
         )
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(
+            self,
+            ctx: commands.Context,
+            error
+    ):
         """
         コマンド実行時のエラーハンドラー
         """
