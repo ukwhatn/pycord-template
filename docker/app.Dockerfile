@@ -1,5 +1,8 @@
 FROM python:3.12.9-slim
 
+# timezone設定
+ENV TZ=Asia/Tokyo
+
 WORKDIR /app
 
 RUN apt update && \
