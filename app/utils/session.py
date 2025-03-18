@@ -28,13 +28,16 @@ class SessionCrud:
         """
         セッションデータ取得
         """
-        return self.crud.get(key)
+        raw = self.crud.get(key)
+        if raw is None:
+            return None
+        return SessionSchema.model_validate(raw)
 
     def set(self, key: str, value: SessionSchema, expire: int | None = None) -> bool:
         """
         セッションデータ設定
         """
-        return self.crud.set(key, value, expire=expire)
+        return self.crud.set(key, value.model_dump(), expire=expire)
 
     def delete(self, key: str) -> int:
         """
