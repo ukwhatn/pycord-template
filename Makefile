@@ -151,8 +151,8 @@ project\:init:
 	fi
 	@UNIX_NAME=$$(echo "$(NAME)" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g' | sed -E 's/^-|-$$//g'); \
 	echo "Initializing project with name: $(NAME) (unix name: $$UNIX_NAME)"; \
-	find . -type f -not -path "*/\.*" -not -path "*/node_modules/*" -not -path "*/venv/*" -exec grep -l "pycord-template" {} \; | xargs -I{} sed -i '' 's/pycord-template/'$$UNIX_NAME'/g' {}; \
-	find . -type f -not -path "*/\.*" -not -path "*/node_modules/*" -not -path "*/venv/*" -exec grep -l "Pycord Template" {} \; | xargs -I{} sed -i '' 's/Pycord Template/$(NAME)/g' {}
+	find . -type f -not -path "*/\.*" -not -path "*/Makefile" -not -path "*/__pycache__/*" -not -path "*/node_modules/*" -not -path "*/venv/*" -exec grep -l "pycord-template" {} \; | xargs -I{} sed -i '' 's/pycord-template/'$$UNIX_NAME'/g' {}; \
+	find . -type f -not -path "*/\.*" -not -path "*/Makefile" -not -path "*/__pycache__/*" -not -path "*/node_modules/*" -not -path "*/venv/*" -exec grep -l "Pycord Template" {} \; | xargs -I{} sed -i '' 's/Pycord Template/$(NAME)/g' {}
 
 	git add .
 	git commit -m "chore: initialize project with name: $(NAME)"
