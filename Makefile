@@ -158,4 +158,47 @@ project\:init:
 	git commit -m "chore: initialize project with name: $(NAME)"
 	git switch -c develop
 
-.PHONY: build up down logs ps pr\:create deploy\:prod poetry\:install poetry\:add poetry\:lock poetry\:update poetry\:reset dev\:setup lint lint\:fix format security\:scan security\:scan\:code security\:scan\:sast test test\:cov test\:setup db\:revision\:create db\:migrate db\:downgrade db\:current db\:history db\:dump db\:backup\:test db\:dump\:oneshot db\:dump\:list db\:dump\:restore db\:dump\:test envs\:setup project\:init
+# テンプレート更新関連コマンド
+template\:list:
+	@if ! git remote | grep -q "template"; then \
+		git remote add template git@github.com:ukwhatn/fastapi-template.git; \
+		echo "Added template remote"; \
+	fi
+	git fetch template
+	@echo "テンプレートの最新コミット一覧："
+	git log template/main -n 10 --oneline
+
+template\:apply:
+	@echo "適用したいコミットのハッシュを入力してください（複数の場合はスペース区切り）："
+	@read commit_hashes; \
+	for hash in $$commit_hashes; do \
+		git cherry-pick -X theirs $$hash || { \
+			echo "自動マージできないコンフリクトが発生しました。手動で解決してください。"; \
+			echo "解決後、git cherry-pick --continue を実行してください。"; \
+			exit 1; \
+		}; \
+	done
+
+template\:apply\:range:
+	@echo "開始コミットハッシュを入力してください（古い方）："
+	@read start_hash; \
+	echo "終了コミットハッシュを入力してください（新しい方）："; \
+	read end_hash; \
+	git cherry-pick -X theirs $$start_hash^..$$end_hash || { \
+		echo "自動マージできないコンフリクトが発生しました。手動で解決してください。"; \
+		echo "解決後、git cherry-pick --continue を実行してください。"; \
+		exit 1; \
+	}
+
+template\:apply\:force:
+	@if ! git remote | grep -q "template"; then \
+		git remote add template git@github.com:ukwhatn/fastapi-template.git; \
+		echo "Added template remote"; \
+	fi
+	git fetch template
+	@echo "適用したいコミットのハッシュを入力してください："
+	@read commit_hash; \
+	git checkout $$commit_hash -- . && \
+	echo "テンプレートの変更が強制的に適用されました。変更を確認しgit add/commitしてください。"
+
+.PHONY: build up down logs ps pr\:create deploy\:prod poetry\:install poetry\:add poetry\:lock poetry\:update poetry\:reset dev\:setup lint lint\:fix format security\:scan security\:scan\:code security\:scan\:sast test test\:cov test\:setup db\:revision\:create db\:migrate db\:downgrade db\:current db\:history db\:dump db\:backup\:test db\:dump\:oneshot db\:dump\:list db\:dump\:restore db\:dump\:test envs\:setup project\:init template\:list template\:apply template\:apply\:range template\:apply\:force
