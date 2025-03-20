@@ -3,7 +3,7 @@ import platform
 import sys
 import traceback
 from datetime import datetime
-from typing import Optional, Type, Any
+from typing import Optional, Type, Any, re
 
 import discord
 import psutil
@@ -62,7 +62,7 @@ class Admin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_application_command_error(
-        self, ctx: discord.ApplicationContext, error: discord.DiscordException
+            self, ctx: discord.ApplicationContext, error: discord.DiscordException
     ):
         """
         コマンド実行時のエラーハンドラー
@@ -97,12 +97,12 @@ class Admin(commands.Cog):
         )
 
     async def _notify_error(
-        self,
-        error_type: Type[Exception],
-        error: Exception,
-        traceback_obj: Any,
-        title: str,
-        context_info: Optional[dict] = None,
+            self,
+            error_type: Type[Exception],
+            error: Exception,
+            traceback_obj: Any,
+            title: str,
+            context_info: Optional[dict] = None,
     ):
         """
         エラーをログに記録し、ボットオーナーに通知する共通処理
@@ -148,7 +148,7 @@ class Admin(commands.Cog):
             # トレースバックが長い場合は分割して追加
             if len(error_message) > 1024:
                 chunks = [
-                    error_message[i : i + 1024]
+                    error_message[i: i + 1024]
                     for i in range(0, len(error_message), 1024)
                 ]
                 for i, chunk in enumerate(chunks):
@@ -223,6 +223,33 @@ class Admin(commands.Cog):
         )
 
         await ctx.respond(embed=embed)
+
+    async def autocomplete_guilds(self, ctx: discord.AutocompleteContext):
+        guilds = [f"{guild.name}({guild.id}/{guild.owner.display_name})" for guild in self.bot.guilds]
+        return [value for value in guilds if value.startswith(ctx.value)]
+
+    @slash_command(name="leave_from_guild", description="指定したサーバーからボットを退出させます")
+    @commands.is_owner()
+    async def leave_from_guild(
+            self,
+            ctx: discord.ApplicationContext,
+            guild: discord.Option(
+                str,
+                "サーバー名",
+                autocomplete=autocomplete_guilds,
+            )
+    ):
+        """指定したサーバーからボットを退出させます"""
+        _, g_id, _ = re.match(r"(.+)\((\d+)/(.+)\)", guild).groups()
+        guild = self.bot.get_guild(int(g_id))
+        if guild is None:
+            return ctx.respond("サーバーが見つかりませんでした", ephemeral=True)
+
+        try:
+            await guild.leave()
+            return ctx.respond(f"{guild.name} から退出しました", ephemeral=True)
+        except Exception as e:
+            return ctx.respond(f"エラーが発生しました: {e}", ephemeral=True)
 
 
 def setup(bot):
