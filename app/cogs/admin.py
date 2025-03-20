@@ -1,9 +1,10 @@
 import logging
 import platform
+import re
 import sys
 import traceback
 from datetime import datetime
-from typing import Optional, Type, Any, re
+from typing import Optional, Type, Any
 
 import discord
 import psutil
