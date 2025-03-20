@@ -48,7 +48,7 @@ services:
       - db
 
   adminer:
-    container_name: fastapi-template-adminer
+    container_name: pycord-template-adminer
     image: adminer:latest
     environment:
       ADMINER_DEFAULT_SERVER: db

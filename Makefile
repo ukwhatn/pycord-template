@@ -161,7 +161,7 @@ project\:init:
 # テンプレート更新関連コマンド
 template\:list:
 	@if ! git remote | grep -q "template"; then \
-		git remote add template git@github.com:ukwhatn/fastapi-template.git; \
+		git remote add template git@github.com:ukwhatn/pycord-template.git; \
 		echo "Added template remote"; \
 	fi
 	git fetch template
@@ -192,7 +192,7 @@ template\:apply\:range:
 
 template\:apply\:force:
 	@if ! git remote | grep -q "template"; then \
-		git remote add template git@github.com:ukwhatn/fastapi-template.git; \
+		git remote add template git@github.com:ukwhatn/pycord-template.git; \
 		echo "Added template remote"; \
 	fi
 	git fetch template
