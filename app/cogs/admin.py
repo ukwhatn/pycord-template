@@ -249,13 +249,13 @@ class Admin(commands.Cog):
         _, g_id, _ = re.match(r"(.+)\((\d+)/(.+)\)", guild).groups()
         guild = self.bot.get_guild(int(g_id))
         if guild is None:
-            return ctx.respond("サーバーが見つかりませんでした", ephemeral=True)
+            await ctx.respond("サーバーが見つかりませんでした", ephemeral=True)
 
         try:
             await guild.leave()
-            return ctx.respond(f"{guild.name} から退出しました", ephemeral=True)
+            await ctx.respond(f"{guild.name} から退出しました", ephemeral=True)
         except Exception as e:
-            return ctx.respond(f"エラーが発生しました: {e}", ephemeral=True)
+            await ctx.respond(f"エラーが発生しました: {e}", ephemeral=True)
 
 
 def setup(bot):
