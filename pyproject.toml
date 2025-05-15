@@ -12,7 +12,7 @@ python = "3.12.*"
 optional = true
 [tool.poetry.group.discord.dependencies]
 py-cord = { extras = ["speed"], version = "^2.6.1" }
-redis = "^5.0.8"
+redis = "^6.1.0"
 sentry-sdk = "^2.13.0"
 psutil = "^7.0.0"
 
