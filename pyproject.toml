@@ -3,7 +3,7 @@ name = "pycord-template"
 version = "1.0.0"
 description = "A template for creating a new discordbot"
 authors = [{ name = "Yuki Watanabe", email = "ukwhatn@gmail.com" }]
-requires-python = "~=3.12"
+requires-python = ">=3.12,<3.13"
 
 [dependency-groups]
 discord = [
