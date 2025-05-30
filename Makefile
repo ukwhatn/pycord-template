@@ -1,44 +1,85 @@
 ENV ?= "dev"
-POETRY_GROUPS = "discord,db,dev"
+UV_GROUPS = "discord,db,dev"
+INCLUDE_DB ?= false
+INCLUDE_REDIS ?= false
 
+# 環境別設定
 ifeq ($(ENV), prod)
-	COMPOSE_YML := compose.prod.yml
+	ENV_MODE := production
+	COMPOSE_PROFILES := prod
+	COMPOSE_ENV_FILES := --env-file ./envs/sentry.env
 else ifeq ($(ENV), stg)
-	COMPOSE_YML := compose.stg.yml
+	ENV_MODE := production
+	COMPOSE_PROFILES := stg
+	COMPOSE_ENV_FILES := 
 else ifeq ($(ENV), test)
-	COMPOSE_YML := compose.test.yml
+	ENV_MODE := production
+	COMPOSE_PROFILES := test
+	COMPOSE_ENV_FILES := 
 else
-	COMPOSE_YML := compose.dev.yml
+	ENV_MODE := development
+	COMPOSE_PROFILES := dev
+	COMPOSE_ENV_FILES := 
 endif
 
+# プロファイル構築
+PROFILES_LIST := $(COMPOSE_PROFILES)
+ifeq ($(INCLUDE_DB), true)
+	PROFILES_LIST := $(PROFILES_LIST) db
+	# devの場合はdb-devも追加
+	ifeq ($(ENV), prod)
+		PROFILES_LIST := $(PROFILES_LIST) db-prod
+	else ifeq ($(ENV), stg)
+		PROFILES_LIST := $(PROFILES_LIST) db-stg
+	else ifeq ($(ENV), test)
+		PROFILES_LIST := $(PROFILES_LIST) db-test
+	else
+		PROFILES_LIST := $(PROFILES_LIST) db-dev
+	endif
+endif
+ifeq ($(INCLUDE_REDIS), true)
+	PROFILES_LIST := $(PROFILES_LIST) redis
+endif
+
+# profile引数構築
+PROFILE_ARGS := $(foreach profile,$(PROFILES_LIST),--profile $(profile))
+
+# composeコマンド構築
+COMPOSE_CMD := docker compose $(PROFILE_ARGS) $(COMPOSE_ENV_FILES)
+
+# 環境変数
+export ENV_MODE
+export INCLUDE_DB
+export INCLUDE_REDIS
+
 build:
-	docker compose -f $(COMPOSE_YML) build
+	$(COMPOSE_CMD) build
 
 build\:no-cache:
-	docker compose -f $(COMPOSE_YML) build --no-cache
+	$(COMPOSE_CMD) build --no-cache
 
 up:
-	docker compose -f $(COMPOSE_YML) up --build -d
+	$(COMPOSE_CMD) up --build -d
 
 down:
-	docker compose -f $(COMPOSE_YML) down
+	$(COMPOSE_CMD) down
 
 reload:
-	docker compose -f $(COMPOSE_YML) build
-	docker compose -f $(COMPOSE_YML) down
-	docker compose -f $(COMPOSE_YML) up -d
+	$(COMPOSE_CMD) build
+	$(COMPOSE_CMD) down
+	$(COMPOSE_CMD) up -d
 
 reset:
-	docker compose -f $(COMPOSE_YML) down --volumes --remove-orphans --rmi all
+	$(COMPOSE_CMD) down --volumes --remove-orphans --rmi all
 
 logs:
-	docker compose -f $(COMPOSE_YML) logs -f
+	$(COMPOSE_CMD) logs -f
 
 logs\:once:
-	docker compose -f $(COMPOSE_YML) logs
+	$(COMPOSE_CMD) logs
 
 ps:
-	docker compose -f $(COMPOSE_YML) ps
+	$(COMPOSE_CMD) ps
 
 pr\:create:
 	git switch develop
@@ -50,89 +91,91 @@ deploy\:prod:
 	make build ENV=prod
 	make reload ENV=prod
 
-poetry\:install:
-	pip install poetry
-	poetry install --with $(group)
+uv\:install:
+	curl -LsSf https://astral.sh/uv/install.sh | sh
 
-poetry\:add:
-	poetry add --group=$(group) $(packages)
-	make poetry:lock
+uv\:add:
+	uv add --group=$(group) $(packages)
+	make uv:lock
 
-poetry\:lock:
-	poetry lock
+uv\:lock:
+	uv lock
 
-poetry\:update:
-	poetry update --with $(group)
+uv\:update:
+	uv lock --upgrade-package $(packages)
 
-poetry\:update\:all:
-	poetry update
+uv\:update\:all:
+	uv lock --upgrade
 
-poetry\:reset:
-	poetry env remove $(which python)
-	poetry install
+uv\:sync:
+	uv sync --group $(group)
 
 dev\:setup:
-	poetry install --with $(POETRY_GROUPS)
+	uv sync --group $(UV_GROUPS)
 
 lint:
-	poetry run ruff check .
+	uv run ruff check .
 
 lint\:fix:
-	poetry run ruff check --fix .
+	uv run ruff check --fix .
 
 format:
-	poetry run ruff format .
+	uv run ruff format .
 
 security\:scan:
 	make security:scan:code
 	make security:scan:sast
 
 security\:scan\:code:
-	poetry run bandit -r app/ -x tests/,app/db/dump.py
+	uv run bandit -r app/ -x tests/,app/db/dump.py
 
 security\:scan\:sast:
-	poetry run semgrep scan --config=p/python --config=p/security-audit --config=p/owasp-top-ten
+	uv run semgrep scan --config=p/python --config=p/security-audit --config=p/owasp-top-ten
 
 db\:revision\:create:
-	docker compose -f $(COMPOSE_YML) build db-migrator
-	docker compose -f $(COMPOSE_YML) run --rm db-migrator custom alembic revision --autogenerate -m '${NAME}'
+	$(COMPOSE_CMD) build db-migrator
+	$(COMPOSE_CMD) run --rm db-migrator custom alembic revision --autogenerate -m '${NAME}'
 
 db\:migrate:
-	docker compose -f $(COMPOSE_YML) build db-migrator
-	docker compose -f $(COMPOSE_YML) run --rm db-migrator custom alembic upgrade head
+	$(COMPOSE_CMD) build db-migrator
+	$(COMPOSE_CMD) run --rm db-migrator custom alembic upgrade head
 
 db\:downgrade:
-	docker compose -f $(COMPOSE_YML) build db-migrator
-	docker compose -f $(COMPOSE_YML) run --rm db-migrator custom alembic downgrade $(REV)
+	$(COMPOSE_CMD) build db-migrator
+	$(COMPOSE_CMD) run --rm db-migrator custom alembic downgrade $(REV)
 
 db\:current:
-	docker compose -f $(COMPOSE_YML) build db-migrator
-	docker compose -f $(COMPOSE_YML) run --rm db-migrator custom alembic current
+	$(COMPOSE_CMD) build db-migrator
+	$(COMPOSE_CMD) run --rm db-migrator custom alembic current
 
 db\:history:
-	docker compose -f $(COMPOSE_YML) build db-migrator
-	docker compose -f $(COMPOSE_YML) run --rm db-migrator custom alembic history
+	$(COMPOSE_CMD) build db-migrator
+	$(COMPOSE_CMD) run --rm db-migrator custom alembic history
 
 # データベースダンプ関連コマンド
 db\:dump:
-	docker compose -f $(COMPOSE_YML) build
-	docker compose -f $(COMPOSE_YML) run --rm --build -e DB_TOOL_MODE=dumper -e DUMPER_MODE=interactive db-dumper custom python dump.py
+	$(COMPOSE_CMD) build
+	$(COMPOSE_CMD) run --rm --build -e DB_TOOL_MODE=dumper -e DUMPER_MODE=interactive db-dumper custom python dump.py
 
 db\:dump\:oneshot:
-	docker compose -f $(COMPOSE_YML) build
-	docker compose -f $(COMPOSE_YML) run --rm db-dumper custom python dump.py oneshot
+	$(COMPOSE_CMD) build
+	$(COMPOSE_CMD) run --rm db-dumper custom python dump.py oneshot
 
 db\:dump\:list:
-	docker compose -f $(COMPOSE_YML) build
-	docker compose -f $(COMPOSE_YML) run --rm db-dumper custom python dump.py list
+	$(COMPOSE_CMD) build
+	$(COMPOSE_CMD) run --rm db-dumper custom python dump.py list
 
 db\:dump\:restore:
-	docker compose -f $(COMPOSE_YML) build
-	docker compose -f $(COMPOSE_YML) run --rm db-dumper custom python dump.py restore $(FILE)
+	$(COMPOSE_CMD) build
+	$(COMPOSE_CMD) run --rm db-dumper custom python dump.py restore $(FILE)
 
 db\:dump\:test:
-	docker compose -f $(COMPOSE_YML) build
-	docker compose -f $(COMPOSE_YML) run --rm db-dumper custom python dump.py test --confirm
+	@if [ "$(INCLUDE_DB)" != "true" ]; then \
+		echo "Skipping database dump test: INCLUDE_DB is not set to true"; \
+	else \
+		$(COMPOSE_CMD) build; \
+		$(COMPOSE_CMD) run --rm db-dumper custom python dump.py test --confirm; \
+	fi
 
 db\:backup\:test: # 後方互換性のためにエイリアスを提供
 	make db:dump:test
@@ -201,4 +244,4 @@ template\:apply\:force:
 	git checkout $$commit_hash -- . && \
 	echo "テンプレートの変更が強制的に適用されました。変更を確認しgit add/commitしてください。"
 
-.PHONY: build up down logs ps pr\:create deploy\:prod poetry\:install poetry\:add poetry\:lock poetry\:update poetry\:reset dev\:setup lint lint\:fix format security\:scan security\:scan\:code security\:scan\:sast test test\:cov test\:setup db\:revision\:create db\:migrate db\:downgrade db\:current db\:history db\:dump db\:backup\:test db\:dump\:oneshot db\:dump\:list db\:dump\:restore db\:dump\:test envs\:setup project\:init template\:list template\:apply template\:apply\:range template\:apply\:force
+.PHONY: build up down logs ps pr\:create deploy\:prod uv\:install uv\:add uv\:lock uv\:update uv\:update\:all uv\:sync dev\:setup lint lint\:fix format security\:scan security\:scan\:code security\:scan\:sast test test\:cov test\:setup db\:revision\:create db\:migrate db\:downgrade db\:current db\:history db\:dump db\:backup\:test db\:dump\:oneshot db\:dump\:list db\:dump\:restore db\:dump\:test envs\:setup project\:init template\:list template\:apply template\:apply\:range template\:apply\:force
