@@ -11,7 +11,12 @@ class DiscordUtil:
 
     @staticmethod
     async def send_dm_to_owner(bot: discord.Bot, **kwargs):
-        owner = await bot.fetch_user(bot.owner_id)
+        owner_id = bot.owner_id
+        if not owner_id:
+            app_info = await bot.application_info()
+            owner = app_info.owner
+        else:
+            owner = await bot.fetch_user(owner_id)
         await DiscordUtil.send_dm(bot, owner, **kwargs)
 
     @staticmethod

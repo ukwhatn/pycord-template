@@ -1,5 +1,6 @@
 import logging
 import platform
+import re
 import sys
 import traceback
 from datetime import datetime
@@ -223,6 +224,38 @@ class Admin(commands.Cog):
         )
 
         await ctx.respond(embed=embed)
+
+    async def autocomplete_guilds(self, ctx: discord.AutocompleteContext):
+        guilds = [
+            f"{guild.name}({guild.id}/{guild.owner.display_name})"
+            for guild in self.bot.guilds
+        ]
+        return [value for value in guilds if value.startswith(ctx.value)]
+
+    @slash_command(
+        name="leave_from_guild", description="指定したサーバーからボットを退出させます"
+    )
+    @commands.is_owner()
+    async def leave_from_guild(
+        self,
+        ctx: discord.ApplicationContext,
+        guild: discord.Option(
+            str,
+            "サーバー名",
+            autocomplete=autocomplete_guilds,
+        ),
+    ):
+        """指定したサーバーからボットを退出させます"""
+        _, g_id, _ = re.match(r"(.+)\((\d+)/(.+)\)", guild).groups()
+        guild = self.bot.get_guild(int(g_id))
+        if guild is None:
+            await ctx.respond("サーバーが見つかりませんでした", ephemeral=True)
+
+        try:
+            await guild.leave()
+            await ctx.respond(f"{guild.name} から退出しました", ephemeral=True)
+        except Exception as e:
+            await ctx.respond(f"エラーが発生しました: {e}", ephemeral=True)
 
 
 def setup(bot):
