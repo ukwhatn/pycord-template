@@ -8,11 +8,7 @@ services:
       - /bin/sh
       - -c
       - |
-        if [ "$ENV_MODE" = "development" ]; then
-          uv run python app/main.py
-        else
-          uv run python app/main.py
-        fi
+        python main.py
     volumes:
       - ./app:/usr/src/app
     env_file:
