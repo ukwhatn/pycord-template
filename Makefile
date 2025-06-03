@@ -1,5 +1,5 @@
 ENV ?= "dev"
-UV_GROUPS = "discord,db,dev"
+UV_GROUPS = discord db dev
 INCLUDE_DB ?= false
 INCLUDE_REDIS ?= false
 
@@ -43,6 +43,9 @@ endif
 
 # profile引数構築
 PROFILE_ARGS := $(foreach profile,$(PROFILES_LIST),--profile $(profile))
+
+# uv group引数構築
+UV_GROUP_ARGS := $(foreach group,$(UV_GROUPS),--group $(group))
 
 # composeコマンド構築
 COMPOSE_CMD := docker compose $(PROFILE_ARGS) $(COMPOSE_ENV_FILES)
@@ -111,7 +114,7 @@ uv\:sync:
 	uv sync --group $(group)
 
 dev\:setup:
-	uv sync --group $(UV_GROUPS)
+	uv sync $(UV_GROUP_ARGS)
 
 lint:
 	uv run ruff check .
