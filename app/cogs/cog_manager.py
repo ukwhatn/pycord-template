@@ -11,7 +11,7 @@ from core import get_settings
 class CogManager(commands.Cog):
     EXCLUDED_FILES: Set[str] = {"__init__.py", "template.py"}
     COG_MODULE_PREFIX = "cogs."
-    
+
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.settings = get_settings()
@@ -51,10 +51,7 @@ class CogManager(commands.Cog):
 
     def _filter_by_input(self, items: List[str], user_input: str) -> List[str]:
         """ユーザー入力に基づいてアイテムをフィルタリング"""
-        return [
-            item for item in items 
-            if item.lower().startswith(user_input.lower())
-        ]
+        return [item for item in items if item.lower().startswith(user_input.lower())]
 
     async def autocomplete_loaded_cog_names(
         self, ctx: discord.ApplicationContext
@@ -73,9 +70,7 @@ class CogManager(commands.Cog):
     def _create_success_embed(self, title: str, description: str) -> discord.Embed:
         """成功時のEmbed作成"""
         return discord.Embed(
-            title=title, 
-            description=description, 
-            color=discord.Color.green()
+            title=title, description=description, color=discord.Color.green()
         )
 
     def _create_error_embed(
@@ -83,16 +78,10 @@ class CogManager(commands.Cog):
     ) -> discord.Embed:
         """エラー時のEmbed作成"""
         embed = discord.Embed(
-            title=title, 
-            description=description, 
-            color=discord.Color.red()
+            title=title, description=description, color=discord.Color.red()
         )
         if error:
-            embed.add_field(
-                name="エラー詳細", 
-                value=f"```{error}```", 
-                inline=False
-            )
+            embed.add_field(name="エラー詳細", value=f"```{error}```", inline=False)
         return embed
 
     async def _handle_cog_operation(
@@ -103,13 +92,13 @@ class CogManager(commands.Cog):
         operation_func,
         success_message: str,
         error_message: str,
-        pre_check=None
+        pre_check=None,
     ) -> None:
         """Cog操作の共通処理"""
         await ctx.response.defer(ephemeral=True)
 
         module_full_name = self._get_full_module_name(modulename)
-        
+
         if pre_check:
             error_embed = pre_check(module_full_name, modulename)
             if error_embed:
@@ -124,7 +113,9 @@ class CogManager(commands.Cog):
             embed = self._create_error_embed(operation, error_message, str(e))
             await ctx.followup.send(embed=embed)
 
-    def _check_module_loaded(self, module_full_name: str, modulename: str) -> Optional[discord.Embed]:
+    def _check_module_loaded(
+        self, module_full_name: str, modulename: str
+    ) -> Optional[discord.Embed]:
         """モジュールがロードされているかチェック"""
         if module_full_name not in self.bot.extensions:
             return self._create_error_embed(
@@ -132,7 +123,9 @@ class CogManager(commands.Cog):
             )
         return None
 
-    def _check_module_not_loaded(self, module_full_name: str, modulename: str) -> Optional[discord.Embed]:
+    def _check_module_not_loaded(
+        self, module_full_name: str, modulename: str
+    ) -> Optional[discord.Embed]:
         """モジュールがロードされていないかチェック"""
         if module_full_name in self.bot.extensions:
             return self._create_error_embed(
@@ -140,7 +133,9 @@ class CogManager(commands.Cog):
             )
         return None
 
-    def _check_unload_restrictions(self, module_full_name: str, modulename: str) -> Optional[discord.Embed]:
+    def _check_unload_restrictions(
+        self, module_full_name: str, modulename: str
+    ) -> Optional[discord.Embed]:
         """アンロード制限をチェック"""
         if module_full_name not in self.bot.extensions:
             return self._create_error_embed(
@@ -168,7 +163,7 @@ class CogManager(commands.Cog):
             operation_func=self.bot.reload_extension,
             success_message=f"Cog `{modulename}` を正常にリロードしました",
             error_message=f"Cog `{modulename}` のリロードに失敗しました",
-            pre_check=self._check_module_loaded
+            pre_check=self._check_module_loaded,
         )
 
     @slash_command(name="load", description="指定したCogをロードします")
@@ -187,7 +182,7 @@ class CogManager(commands.Cog):
             operation_func=self.bot.load_extension,
             success_message=f"Cog `{modulename}` を正常にロードしました",
             error_message=f"Cog `{modulename}` のロードに失敗しました",
-            pre_check=self._check_module_not_loaded
+            pre_check=self._check_module_not_loaded,
         )
 
     @slash_command(name="unload", description="指定したCogをアンロードします")
@@ -206,7 +201,7 @@ class CogManager(commands.Cog):
             operation_func=self.bot.unload_extension,
             success_message=f"Cog `{modulename}` を正常にアンロードしました",
             error_message=f"Cog `{modulename}` のアンロードに失敗しました",
-            pre_check=self._check_unload_restrictions
+            pre_check=self._check_unload_restrictions,
         )
 
     def _create_cog_status_info(self, loaded_modules: List[str]) -> List[str]:
@@ -221,10 +216,7 @@ class CogManager(commands.Cog):
         """Cog状態表示用のEmbedを作成"""
         loaded_modules = self._get_loaded_modules()
         available_files = self._get_available_cog_files()
-        unloaded_cogs = [
-            cog for cog in available_files 
-            if cog not in loaded_modules
-        ]
+        unloaded_cogs = [cog for cog in available_files if cog not in loaded_modules]
 
         embed = discord.Embed(title="Cog管理状況", color=discord.Color.blue())
 
